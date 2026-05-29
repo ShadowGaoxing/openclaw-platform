@@ -1,6 +1,7 @@
 import { ConfigProvider } from 'antd';
 import zhCN from 'antd/locale/zh_CN';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import MainLayout from './layouts/MainLayout';
 import AdminPanel from './pages/admin/AdminPanel';
 import Login from './pages/auth/Login';
@@ -30,8 +31,9 @@ function App() {
         },
       }}
     >
-      <BrowserRouter>
-        <Routes>
+      <ErrorBoundary>
+        <BrowserRouter>
+          <Routes>
           {/* 公开路由 */}
           <Route path="/login" element={<Login />} />
 
@@ -79,8 +81,9 @@ function App() {
 
           {/* 404 兜底 */}
           <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </BrowserRouter>
+          </Routes>
+        </BrowserRouter>
+      </ErrorBoundary>
     </ConfigProvider>
   );
 }

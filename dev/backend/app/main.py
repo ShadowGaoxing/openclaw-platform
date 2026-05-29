@@ -69,10 +69,10 @@ app = FastAPI(
     description="跨部门 OpenCLAW 协作系统 API V2.2",
 )
 
-# CORS — 开发环境放开，生产环境收紧到面板域名
+# CORS — 从 settings 读取，开发环境默认 ["*"]，生产环境通过 CORS_ORIGINS 环境变量配置
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=settings.cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

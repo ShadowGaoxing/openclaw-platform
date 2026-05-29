@@ -1,0 +1,52 @@
+/* ============================================
+ * OpenCLAW Design Token — Theme Variables
+ * Design: 林小雅 (UI Design)
+ * Engineering: 王浩然 (Frontend)
+ * Version: 1.0
+ * ============================================ */
+
+:root {
+  /* ===== 品牌色 Brand Colors ===== */
+  --openclaw-primary: #364fc7;
+  --openclaw-primary-light: #a5d8ff;
+  --openclaw-primary-dark: #1e3a8a;
+
+  /* ===== 功能色 Semantic Colors ===== */
+  --openclaw-success: #51cf66;
+  --openclaw-warning: #fcc419;
+  --openclaw-danger: #ff6b6b;
+  --openclaw-info: #22d3ee;
+
+  /* ===== 中性色 Neutral Colors ===== */
+  --openclaw-bg: #f8f9fa;
+  --openclaw-surface: #ffffff;
+  --openclaw-border: #e9ecef;
+  --openclaw-text-primary: #212529;
+  --openclaw-text-secondary: #6c757d;
+
+  /* ===== 圆角 Border Radius ===== */
+  --openclaw-radius-sm: 6px;
+  --openclaw-radius-md: 8px;
+  --openclaw-radius-lg: 12px;
+
+  /* ===== 阴影 Box Shadow ===== */
+  --openclaw-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+  --openclaw-shadow-md: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --openclaw-shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.12);
+
+  /* ===== 间距 Spacing ===== */
+  --openclaw-space-xs: 4px;
+  --openclaw-space-sm: 8px;
+  --openclaw-space-md: 16px;
+  --openclaw-space-lg: 24px;
+  --openclaw-space-xl: 32px;
+}
+
+/* ===== 暗色模式（预留，P3 规划） ===== */
+[data-theme='dark'] {
+  --openclaw-bg: #1a1b1e;
+  --openclaw-surface: #25262b;
+  --openclaw-border: #373a40;
+  --openclaw-text-primary: #e2e8f0;
+  --openclaw-text-secondary: #94a3b8;
+}
