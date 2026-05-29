@@ -23,7 +23,7 @@ import {
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';
-import type { Task, TaskStatus, PaginatedResponse } from '../../types';
+import type { Task, TaskStatus } from '../../types';
 import { tasksApi } from '../../api/tasks';
 import { useAuthStore } from '../../store/authStore';
 import { useTaskStore } from '../../store/taskStore';
@@ -50,11 +50,8 @@ const statusConfig: Record<TaskStatus, { color: string; label: string }> = {
 const TaskList: React.FC = () => {
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
-  const { setTasks } = useTaskStore();
-  const [tasks, setLocalTasks] = useState<Task[]>([]);
-  const [total, setTotal] = useState(0);
+  const { tasks, total, activeTab, setActiveTab, setTasks } = useTaskStore();
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<string>('pending');
   const [claimingId, setClaimingId] = useState<string | null>(null);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [createForm] = Form.useForm();
@@ -68,8 +65,6 @@ const TaskList: React.FC = () => {
         status: statusParam,
         mine: tab !== 'all',
       });
-      setLocalTasks(result.items);
-      setTotal(result.total);
       setTasks(result);
     } catch {
       message.error('加载任务失败');

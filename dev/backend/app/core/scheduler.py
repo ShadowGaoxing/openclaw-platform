@@ -5,6 +5,10 @@ PRD V2.2 §6.1 + §6.2：
 - 每 60s：检查 inactivity_timeout_at 过期任务 → 自动回收，通知管理员
 - 每 60s：auto/hybrid 策略且超过 10 分钟无人领取 → 自动兜底分配给最空闲 Agent
 - 每 30s：检查 Agent 心跳，超过阈值更新状态（suspected / stale）
+
+调度器去重（V2.2 修复冲刺）：
+- 四个定时任务全部包 run_once（Redis 分布式锁）
+- auto_fallback_assign 内任务锁加 ownership 校验
 """
 import asyncio
 import logging
@@ -16,6 +20,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import AsyncSessionFactory
 from app.core.redis_client import get_redis
+from app.core.locks import run_once
 from app.models.task import Task
 from app.models.agent import Agent
 from app.models.audit_log import AuditLog
@@ -154,6 +159,15 @@ async def auto_fallback_assign():
                 redis = await get_redis()
                 acquired = await redis.set(lock_key, "system:auto", ex=10, nx=True)
                 if not acquired:
+                    # 审计日志：任务锁争用
+                    db.add(AuditLog(
+                        actor_id="system",
+                        actor_role="system",
+                        action_type="task_lock_contention",
+                        target_type="task",
+                        target_id=task.id,
+                        new_value={"action": "skipped", "reason": "lock_held_by_other_worker"},
+                    ))
                     continue  # 有人正在领取，跳过
 
                 try:
@@ -176,10 +190,15 @@ async def auto_fallback_assign():
                     ))
                     logger.info(f"Task {task.id} auto-assigned to agent {target.agent_name} (load {load_ratio(target):.2f})")
                 finally:
-                    try:
+                    # ownership 校验：只有 system:auto 持有者才能释放
+                    current_owner = await redis.get(lock_key)
+                    if current_owner == "system:auto":
                         await redis.delete(lock_key)
-                    except Exception:
-                        pass
+                    elif current_owner is not None:
+                        logger.warning(
+                            "Skipping task lock release for %s: owned by %s (expected system:auto)",
+                            lock_key, current_owner,
+                        )
 
             await db.commit()
         except Exception as e:
@@ -258,9 +277,22 @@ async def _release_agent_tasks(db: AsyncSession, user_id: str, reason: str):
 # ---------- 调度器初始化 ----------
 
 def setup_scheduler():
-    """注册所有定时任务"""
+    """注册所有定时任务（带分布式锁）"""
+
+    async def safe_claim_timeouts():
+        await run_once("check_claim_timeouts", check_claim_timeouts)
+
+    async def safe_inactivity_timeouts():
+        await run_once("check_inactivity_timeouts", check_inactivity_timeouts)
+
+    async def safe_auto_assign():
+        await run_once("auto_fallback_assign", auto_fallback_assign)
+
+    async def safe_agent_heartbeats():
+        await run_once("check_agent_heartbeats", check_agent_heartbeats, ttl=35)
+
     scheduler.add_job(
-        check_claim_timeouts,
+        safe_claim_timeouts,
         "interval",
         seconds=60,
         id="check_claim_timeouts",
@@ -268,7 +300,7 @@ def setup_scheduler():
         coalesce=True,
     )
     scheduler.add_job(
-        check_inactivity_timeouts,
+        safe_inactivity_timeouts,
         "interval",
         seconds=60,
         id="check_inactivity_timeouts",
@@ -276,7 +308,7 @@ def setup_scheduler():
         coalesce=True,
     )
     scheduler.add_job(
-        auto_fallback_assign,
+        safe_auto_assign,
         "interval",
         seconds=60,
         id="auto_fallback_assign",
@@ -284,7 +316,7 @@ def setup_scheduler():
         coalesce=True,
     )
     scheduler.add_job(
-        check_agent_heartbeats,
+        safe_agent_heartbeats,
         "interval",
         seconds=30,
         id="check_agent_heartbeats",

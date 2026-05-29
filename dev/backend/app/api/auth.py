@@ -1,4 +1,4 @@
-"""认证 API — 登录 + 注册 + 个人资料"""
+"""认证 API — 登录 + 个人资料（注册功能已关闭，V2.2 MVP）"""
 from datetime import timedelta
 from typing import Annotated, Optional
 
@@ -11,7 +11,6 @@ from app.core.database import get_db
 from app.core.deps import get_current_user
 from app.core.security import (
     verify_password,
-    get_password_hash,
     create_access_token,
 )
 from app.core.config import get_settings
@@ -41,15 +40,6 @@ class UserPayload(BaseModel):
 class LoginPayload(BaseModel):
     token: str
     user: UserPayload
-
-
-class RegisterRequest(BaseModel):
-    username: str = Field(..., min_length=2, max_length=64)
-    password: str = Field(..., min_length=6, max_length=128)
-    display_name: str = Field(..., min_length=1, max_length=64)
-    department_id: str = Field(..., min_length=1, max_length=36)
-    role: str = Field(default="member", pattern="^(admin|dept_head|member)$")
-    email: str = Field(default="", max_length=128)
 
 
 def _user_to_payload(user: User) -> UserPayload:
@@ -87,34 +77,6 @@ async def login(request: LoginRequest, db: Annotated[AsyncSession, Depends(get_d
     )
 
     return ok(LoginPayload(token=access_token, user=_user_to_payload(user)), message="登录成功")
-
-
-@router.post("/register", response_model=ApiResponse[LoginPayload], status_code=status.HTTP_201_CREATED)
-async def register(request: RegisterRequest, db: Annotated[AsyncSession, Depends(get_db)]):
-    """注册新用户（开发环境方便测试）"""
-    result = await db.execute(select(User).where(User.username == request.username))
-    if result.scalar_one_or_none() is not None:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="用户名已存在",
-        )
-
-    user = User(
-        username=request.username,
-        hashed_password=get_password_hash(request.password),
-        display_name=request.display_name,
-        department_id=request.department_id,
-        role=request.role,
-        email=request.email or None,
-    )
-    db.add(user)
-    await db.flush()
-
-    access_token = create_access_token(
-        data={"sub": user.id, "role": user.role, "dept": user.department_id},
-    )
-
-    return ok(LoginPayload(token=access_token, user=_user_to_payload(user)), message="注册成功")
 
 
 @router.get("/profile", response_model=ApiResponse[UserPayload])

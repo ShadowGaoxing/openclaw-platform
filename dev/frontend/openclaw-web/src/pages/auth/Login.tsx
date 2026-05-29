@@ -43,7 +43,7 @@ const Login: React.FC = () => {
           borderRadius: 16,
           boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
         }}
-        bodyStyle={{ padding: 40 }}
+        styles={{ body: { padding: 40 } }}
       >
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
           <div style={{ fontSize: 48, marginBottom: 8 }}>🦾</div>

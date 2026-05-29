@@ -1,0 +1,11 @@
+export { adminApi } from './admin';
+export type { DashboardStats, AuditLogItem } from './admin';
+export { agentsApi } from './agents';
+export type { AgentItem } from './agents';
+export { authApi } from './auth';
+export { default as apiClient, unwrap } from './client';
+export { departmentsApi } from './departments';
+export type { Department, Quota, ModelLock } from './departments';
+export { modelsApi } from './models';
+export { sharedApi } from './shared';
+export { tasksApi } from './tasks';
