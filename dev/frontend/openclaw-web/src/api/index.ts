@@ -1,13 +1,11 @@
-<!DOCTYPE HTML>
-<html lang="en">
-    <head>
-        <meta charset="utf-8">
-        <title>Error response</title>
-    </head>
-    <body>
-        <h1>Error response</h1>
-        <p>Error code: 404</p>
-        <p>Message: File not found.</p>
-        <p>Error code explanation: 404 - Nothing matches the given URI.</p>
-    </body>
-</html>
+export { adminApi } from './admin';
+export type { DashboardStats, AuditLogItem } from './admin';
+export { agentsApi } from './agents';
+export type { AgentItem } from './agents';
+export { authApi } from './auth';
+export { default as apiClient, unwrap } from './client';
+export { departmentsApi } from './departments';
+export type { Department, Quota, ModelLock } from './departments';
+export { modelsApi } from './models';
+export { sharedApi } from './shared';
+export { tasksApi } from './tasks';
