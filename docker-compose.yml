@@ -1,0 +1,235 @@
+version: "3.9"
+
+# ========================================================
+# OpenCLAW 协作平台 Docker Compose (V2.2)
+# PRD §5.1: 4C8G 部署，各容器 memory 限制
+# ========================================================
+
+services:
+  # ────────────────────────────────────────────────────
+  # 1. PostgreSQL
+  # ────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: openclaw-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-openclaw}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-openclaw_dev_2026}
+      POSTGRES_DB: ${POSTGRES_DB:-openclaw}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-openclaw}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+    networks:
+      - openclaw-net
+
+  # ────────────────────────────────────────────────────
+  # 2. Redis — 心跳 + 缓存 + 分布式锁
+  # ────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: openclaw-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    networks:
+      - openclaw-net
+
+  # ────────────────────────────────────────────────────
+  # 3. NATS JetStream — 消息队列
+  # PRD 决策 1：持久化 + JWT 认证 + at-least-once
+  # ────────────────────────────────────────────────────
+  nats:
+    image: nats:2.10-alpine
+    container_name: openclaw-nats
+    restart: unless-stopped
+    command: >
+      --jetstream
+      --store_dir /data
+      --max_payload 10MB
+      --http_port 8222
+      --ws --wsport 9222
+    volumes:
+      - nats_data:/data
+      - ./nats/nats-server.conf:/etc/nats/nats-server.conf:ro
+    ports:
+      - "4222:4222"    # NATS 客户端端口（仅内网）
+      - "8222:8222"    # NATS 监控
+    # WS 9222 不对外暴露，由 Nginx 反向代理
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8222/healthz || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    networks:
+      - openclaw-net
+
+  # ────────────────────────────────────────────────────
+  # 4. MinIO — 对象存储（成果文件 + 模型文件）
+  # ────────────────────────────────────────────────────
+  minio:
+    image: minio/minio:latest
+    container_name: openclaw-minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-openclaw}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-openclaw_dev_2026}
+    volumes:
+      - minio_data:/data
+    ports:
+      - "9000:9000"    # S3 API
+      - "9001:9001"    # Console
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9000/minio/health/live || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    networks:
+      - openclaw-net
+
+  # ────────────────────────────────────────────────────
+  # 5. FastAPI 后端
+  # ────────────────────────────────────────────────────
+  api:
+    build:
+      context: ./dev/backend
+      dockerfile: Dockerfile
+    container_name: openclaw-api
+    restart: unless-stopped
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: ${POSTGRES_USER:-openclaw}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-openclaw_dev_2026}
+      POSTGRES_DB: ${POSTGRES_DB:-openclaw}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      NATS_HOST: nats
+      NATS_PORT: 4222
+      MINIO_HOST: minio
+      MINIO_PORT: 9000
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-openclaw}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-openclaw_dev_2026}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-change-this-in-production}
+      DEBUG: "false"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      nats:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    networks:
+      - openclaw-net
+
+  # ────────────────────────────────────────────────────
+  # 6. Nginx — TLS 终止 + NATS WS 代理 + 前端静态资源
+  # PRD 决策 1：Nginx 做 TLS + 身份透传
+  # ────────────────────────────────────────────────────
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: openclaw-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/certs:/etc/nginx/certs:ro        # 生产环境证书
+      - ./dev/frontend/openclaw-web/dist:/var/www/html:ro
+    depends_on:
+      api:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+    networks:
+      - openclaw-net
+
+  # ────────────────────────────────────────────────────
+  # 7. Prometheus 指标采集（PRD §6.5）
+  # ────────────────────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: openclaw-prometheus
+    restart: unless-stopped
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.retention.time=30d"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - openclaw-net
+    profiles:
+      - monitoring
+
+  # ────────────────────────────────────────────────────
+  # 8. Grafana 可视化
+  # ────────────────────────────────────────────────────
+  grafana:
+    image: grafana/grafana:latest
+    container_name: openclaw-grafana
+    restart: unless-stopped
+    volumes:
+      - grafana_data:/var/lib/grafana
+    ports:
+      - "3001:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
+    networks:
+      - openclaw-net
+    profiles:
+      - monitoring
+
+
+volumes:
+  postgres_data:
+  redis_data:
+  nats_data:
+  minio_data:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  openclaw-net:
+    driver: bridge

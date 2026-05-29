@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpenCLAW 跨部门协作系统 · 终版架构图</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: #020617;
+  color: #e2e8f0;
+  font-family: 'JetBrains Mono', monospace;
+  padding: 40px 20px;
+  display: flex; flex-direction: column; align-items: center;
+}
+.container { max-width: 1200px; width: 100%; }
+.header { margin-bottom: 30px; }
+.header h1 { font-size: 24px; font-weight: 700; color: #f1f5f9; }
+.header .subtitle { font-size: 13px; color: #64748b; margin-top: 6px; }
+.pulse { display: inline-block; width: 10px; height: 10px; background: #22d3ee; border-radius: 50%; margin-right: 12px; animation: pulse 2s infinite; }
+@keyframes pulse { 0% { opacity: 1; box-shadow: 0 0 0 0 rgba(34, 211, 238, 0.4); } 70% { opacity: 0.7; box-shadow: 0 0 0 10px rgba(34, 211, 238, 0); } 100% { opacity: 1; } }
+.diagram-card {
+  background: #0f172a;
+  border: 1px solid #1e293b;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 24px;
+}
+.diagram-card svg { display: block; margin: 0 auto; max-width: 100%; }
+.cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
+.card {
+  background: #0f172a;
+  border: 1px solid #1e293b;
+  border-radius: 10px;
+  padding: 18px;
+}
+.card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.card-dot { width: 8px; height: 8px; border-radius: 50%; }
+.card-dot.cyan { background: #22d3ee; }
+.card-dot.emerald { background: #34d399; }
+.card-dot.violet { background: #a78bfa; }
+.card h3 { font-size: 13px; font-weight: 600; color: #f1f5f9; }
+.card ul { list-style: none; }
+.card li { font-size: 11px; color: #94a3b8; line-height: 1.8; }
+.card li::before { content: "• "; color: #475569; }
+.footer { text-align: center; font-size: 10px; color: #334155; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1><span class="pulse"></span>OpenCLAW 跨部门协作系统 · 终版架构图</h1>
+    <div class="subtitle">NATS JetStream · 4C8G 云服务器 · 三级模型路由 · 全链路可观测 · V2.0</div>
+  </div>
+
+  <div class="diagram-card">
+    <svg viewBox="0 0 1100 750" width="1100" height="750" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+          <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1e293b" stroke-width="0.5"/>
+        </pattern>
+        <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+          <path d="M 0 0 L 10 5 L 0 10 Z" fill="#475569"/>
+        </marker>
+        <marker id="arrow-emerald" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+          <path d="M 0 0 L 10 5 L 0 10 Z" fill="#34d399"/>
+        </marker>
+        <marker id="arrow-rose" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+          <path d="M 0 0 L 10 5 L 0 10 Z" fill="#fb7185"/>
+        </marker>
+      </defs>
+
+      <rect width="1100" height="750" fill="url(#grid)" />
+
+      <!-- ===== Cloud Boundary ===== -->
+      <rect x="15" y="60" width="480" height="660" rx="12" fill="none" stroke="#fbbf24" stroke-width="1.5" stroke-dasharray="8,4" opacity="0.5"/>
+      <text x="30" y="82" fill="#fbbf24" font-size="9" opacity="0.7">☁️ 云服务器 4C8G（阿里云/腾讯云）</text>
+
+      <!-- ===== Internal Network Boundary ===== -->
+      <rect x="525" y="60" width="560" height="660" rx="12" fill="none" stroke="#22d3ee" stroke-width="1.5" stroke-dasharray="8,4" opacity="0.3"/>
+      <text x="540" y="82" fill="#22d3ee" font-size="9" opacity="0.7">🏢 企业内部网（VPN TLS / WireGuard）</text>
+
+      <!-- ===== CLOUD SIDE COMPONENTS ===== -->
+
+      <!-- Layer 1: API & Web -->
+      <rect x="40" y="100" width="200" height="60" rx="6" fill="rgba(8,51,68,0.4)" stroke="#22d3ee" stroke-width="1.5"/>
+      <text x="140" y="128" text-anchor="middle" fill="#22d3ee" font-size="12" font-weight="600">主 OpenCLAW API</text>
+      <text x="140" y="145" text-anchor="middle" fill="#64748b" font-size="8">FastAPI · 任务调度 · 路由</text>
+
+      <rect x="270" y="100" width="200" height="60" rx="6" fill="rgba(8,51,68,0.4)" stroke="#22d3ee" stroke-width="1.5"/>
+      <text x="370" y="128" text-anchor="middle" fill="#22d3ee" font-size="12" font-weight="600">Web 管理面板</text>
+      <text x="370" y="145" text-anchor="middle" fill="#64748b" font-size="8">React + AntD + Zustand</text>
+
+      <!-- Layer 2: NATS + Redis + PG -->
+      <rect x="40" y="200" width="200" height="60" rx="6" fill="rgba(251,146,60,0.3)" stroke="#fb923c" stroke-width="1.5"/>
+      <text x="140" y="228" text-anchor="middle" fill="#fb923c" font-size="12" font-weight="600">NATS JetStream</text>
+      <text x="140" y="245" text-anchor="middle" fill="#64748b" font-size="8">消息队列 · 持久化 · at-least-once</text>
+
+      <rect x="270" y="200" width="200" height="60" rx="6" fill="rgba(76,29,149,0.4)" stroke="#a78bfa" stroke-width="1.5"/>
+      <text x="370" y="228" text-anchor="middle" fill="#a78bfa" font-size="12" font-weight="600">PostgreSQL</text>
+      <text x="370" y="245" text-anchor="middle" fill="#64748b" font-size="8">任务 · 用户 · 模型路由</text>
+
+      <!-- Layer 3: Redis + MinIO -->
+      <rect x="40" y="300" width="200" height="60" rx="6" fill="rgba(251,146,60,0.3)" stroke="#fb923c" stroke-width="1.5"/>
+      <text x="140" y="328" text-anchor="middle" fill="#fb923c" font-size="12" font-weight="600">Redis</text>
+      <text x="140" y="345" text-anchor="middle" fill="#64748b" font-size="8">心跳 TTL 60s · Token Bucket · 缓存</text>
+
+      <rect x="270" y="300" width="200" height="60" rx="6" fill="rgba(120,53,15,0.3)" stroke="#fbbf24" stroke-width="1.5"/>
+      <text x="370" y="328" text-anchor="middle" fill="#fbbf24" font-size="12" font-weight="600">MinIO 对象存储</text>
+      <text x="370" y="345" text-anchor="middle" fill="#64748b" font-size="8">成果文件 · 模型文件 · 共享库</text>
+
+      <!-- Layer 4: Monitoring -->
+      <rect x="155" y="400" width="200" height="50" rx="6" fill="rgba(136,19,55,0.4)" stroke="#fb7185" stroke-width="1.5"/>
+      <text x="255" y="427" text-anchor="middle" fill="#fb7185" font-size="11" font-weight="600">Prometheus + Metrics</text>
+      <text x="255" y="440" text-anchor="middle" fill="#64748b" font-size="8">所有 Agent 指标 · 任务队列</text>
+
+      <!-- ===== INTERNAL NETWORK COMPONENTS ===== -->
+
+      <!-- Department A: GPU -->
+      <rect x="545" y="100" width="240" height="160" rx="8" fill="rgba(6,78,59,0.4)" stroke="#34d399" stroke-width="1.5"/>
+      <text x="665" y="122" text-anchor="middle" fill="#34d399" font-size="12" font-weight="600">🏭 研发部 · K3s 集群</text>
+
+      <rect x="560" y="135" width="100" height="40" rx="4" fill="rgba(8,51,68,0.4)" stroke="#22d3ee" stroke-width="1"/>
+      <text x="610" y="158" text-anchor="middle" fill="#22d3ee" font-size="10">分 Agent</text>
+
+      <rect x="670" y="135" width="100" height="40" rx="4" fill="rgba(6,78,59,0.4)" stroke="#34d399" stroke-width="1"/>
+      <text x="720" y="158" text-anchor="middle" fill="#34d399" font-size="10">本地 7B (量化)</text>
+
+      <rect x="560" y="185" width="100" height="40" rx="4" fill="rgba(251,146,60,0.3)" stroke="#fb923c" stroke-width="1"/>
+      <text x="610" y="208" text-anchor="middle" fill="#fb923c" font-size="10">本地 SQLite</text>
+
+      <rect x="670" y="185" width="100" height="40" rx="4" fill="rgba(120,53,15,0.3)" stroke="#fbbf24" stroke-width="1"/>
+      <text x="720" y="208" text-anchor="middle" fill="#fbbf24" font-size="10">模型缓存</text>
+
+      <!-- Department B: CPU/API -->
+      <rect x="815" y="100" width="250" height="160" rx="8" fill="rgba(6,78,59,0.4)" stroke="#34d399" stroke-width="1.5"/>
+      <text x="940" y="122" text-anchor="middle" fill="#34d399" font-size="12" font-weight="600">📢 市场部 · PC</text>
+
+      <rect x="830" y="135" width="100" height="40" rx="4" fill="rgba(8,51,68,0.4)" stroke="#22d3ee" stroke-width="1"/>
+      <text x="880" y="158" text-anchor="middle" fill="#22d3ee" font-size="10">分 Agent</text>
+
+      <rect x="940" y="135" width="100" height="40" rx="4" fill="rgba(6,78,59,0.4)" stroke="#34d399" stroke-width="1"/>
+      <text x="990" y="158" text-anchor="middle" fill="#34d399" font-size="10">API 直调（token）</text>
+
+      <rect x="830" y="185" width="210" height="40" rx="4" fill="rgba(251,146,60,0.3)" stroke="#fb923c" stroke-width="1"/>
+      <text x="935" y="208" text-anchor="middle" fill="#fb923c" font-size="10">本地 SQLite 离线缓存</text>
+
+      <!-- Department C: Light -->
+      <rect x="545" y="300" width="240" height="160" rx="8" fill="rgba(6,78,59,0.4)" stroke="#34d399" stroke-width="1.5"/>
+      <text x="665" y="322" text-anchor="middle" fill="#34d399" font-size="12" font-weight="600">👥 人事部 · PC</text>
+
+      <rect x="560" y="335" width="100" height="40" rx="4" fill="rgba(8,51,68,0.4)" stroke="#22d3ee" stroke-width="1"/>
+      <text x="610" y="358" text-anchor="middle" fill="#22d3ee" font-size="10">分 Agent</text>
+
+      <rect x="670" y="335" width="100" height="40" rx="4" fill="rgba(6,78,59,0.4)" stroke="#34d399" stroke-width="1"/>
+      <text x="720" y="358" text-anchor="middle" fill="#34d399" font-size="10">本地小模型 4bit</text>
+
+      <rect x="560" y="385" width="210" height="40" rx="4" fill="rgba(251,146,60,0.3)" stroke="#fb923c" stroke-width="1"/>
+      <text x="665" y="408" text-anchor="middle" fill="#fb923c" font-size="10">本地 SQLite 离线缓存</text>
+
+      <!-- Department D -->
+      <rect x="815" y="300" width="250" height="160" rx="8" fill="rgba(6,78,59,0.4)" stroke="#34d399" stroke-width="1.5"/>
+      <text x="940" y="322" text-anchor="middle" fill="#34d399" font-size="12" font-weight="600">🔬 其他部门（可扩展）</text>
+
+      <rect x="830" y="335" width="210" height="40" rx="4" fill="rgba(8,51,68,0.4)" stroke="#22d3ee" stroke-width="1"/>
+      <text x="935" y="358" text-anchor="middle" fill="#22d3ee" font-size="10">Docker Compose / K3s</text>
+
+      <rect x="830" y="385" width="210" height="40" rx="4" fill="rgba(251,146,60,0.3)" stroke="#fb923c" stroke-width="1"/>
+      <text x="935" y="408" text-anchor="middle" fill="#fb923c" font-size="10">按需部署 Agent</text>
+
+      <!-- ===== Model Routing Layer ===== -->
+      <rect x="155" y="480" width="440" height="70" rx="6" fill="rgba(30,41,59,0.5)" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="4,4"/>
+      <text x="375" y="505" text-anchor="middle" fill="#94a3b8" font-size="11" font-weight="600">🧠 模型路由引擎（三级选择）</text>
+      <text x="375" y="522" text-anchor="middle" fill="#64748b" font-size="8">1级: 自动路由（最便宜模型） → 2级: 员工手动覆盖（成本警告） → 3级: 管理员锁定</text>
+      <text x="375" y="538" text-anchor="middle" fill="#64748b" font-size="8">缓存 Key: sha256(task_type + model_name + input_hash + dept_id)</text>
+
+      <!-- ===== CONNECTION ARROWS ===== -->
+      <!-- NATS → Agent 1 -->
+      <line x1="240" y1="230" x2="560" y2="155" stroke="#475569" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.8"/>
+      <text x="390" y="165" fill="#64748b" font-size="8">NATS → 拉取任务</text>
+
+      <!-- NATS → Agent 2 -->
+      <line x1="240" y1="240" x2="830" y2="155" stroke="#475569" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.8"/>
+      <text x="470" y="175" fill="#64748b" font-size="8">NATS → 拉取任务</text>
+
+      <!-- NATS → Agent 3 -->
+      <line x1="240" y1="250" x2="560" y2="355" stroke="#475569" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.8"/>
+
+      <!-- NATS → Agent 4 -->
+      <line x1="240" y1="260" x2="830" y2="355" stroke="#475569" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.8"/>
+
+      <!-- Agent 1 → MinIO (成果上传) -->
+      <line x1="800" y1="155" x2="470" y2="330" stroke="#34d399" stroke-width="1.5" marker-end="url(#arrow-emerald)" opacity="0.7" stroke-dasharray="4,3"/>
+      <text x="640" y="245" fill="#34d399" font-size="8">成果上传 MinIO</text>
+
+      <!-- Agent 1 → Redis (心跳) -->
+      <line x1="560" y1="195" x2="240" y2="320" stroke="#fb7185" stroke-width="1.0" marker-end="url(#arrow-rose)" opacity="0.5" stroke-dasharray="3,3"/>
+      <text x="380" y="270" fill="#fb7185" font-size="7">心跳 30s → Redis TTL 60s</text>
+
+      <!-- ===== LEGEND ===== -->
+      <rect x="40" y="580" width="1020" height="120" rx="6" fill="none" stroke="#1e293b" stroke-width="1"/>
+      <text x="60" y="600" fill="#94a3b8" font-size="10" font-weight="600">图例</text>
+      <rect x="60" y="610" width="12" height="12" rx="2" fill="rgba(8,51,68,0.4)" stroke="#22d3ee" stroke-width="1"/><text x="80" y="620" fill="#64748b" font-size="8">前端/API</text>
+      <rect x="150" y="610" width="12" height="12" rx="2" fill="rgba(251,146,60,0.3)" stroke="#fb923c" stroke-width="1"/><text x="170" y="620" fill="#64748b" font-size="8">消息/缓存</text>
+      <rect x="250" y="610" width="12" height="12" rx="2" fill="rgba(76,29,149,0.4)" stroke="#a78bfa" stroke-width="1"/><text x="270" y="620" fill="#64748b" font-size="8">数据库</text>
+      <rect x="330" y="610" width="12" height="12" rx="2" fill="rgba(120,53,15,0.3)" stroke="#fbbf24" stroke-width="1"/><text x="350" y="620" fill="#64748b" font-size="8">存储</text>
+      <rect x="400" y="610" width="12" height="12" rx="2" fill="rgba(136,19,55,0.4)" stroke="#fb7185" stroke-width="1"/><text x="420" y="620" fill="#64748b" font-size="8">监控</text>
+      <rect x="480" y="610" width="12" height="12" rx="2" fill="rgba(6,78,59,0.4)" stroke="#34d399" stroke-width="1"/><text x="500" y="620" fill="#64748b" font-size="8">分节点/Agent</text>
+
+      <text x="60" y="645" fill="#64748b" font-size="9">实线箭头: 任务下发与成果上传</text>
+      <text x="60" y="660" fill="#64748b" font-size="9">虚线玫瑰箭头: 心跳上报 → Redis（TTL 60s，不直接写 PG）</text>
+      <text x="60" y="675" fill="#64748b" font-size="9">绿色虚线箭头: 成果文件上传 → MinIO</text>
+      <text x="60" y="690" fill="#64748b" font-size="9">📌 连接: WireGuard / TLS · 消息: NATS at-least-once · 鉴权: JWT</text>
+    </svg>
+  </div>
+
+  <div class="cards">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-dot cyan"></div>
+        <h3>任务流转</h3>
+      </div>
+      <ul>
+        <li>创建任务 → NATS 任务队列</li>
+        <li>员工手动领取（30min 超时释放）</li>
+        <li>10min 自动兜底分配</li>
+        <li>Agent 执行 → 进度上报 → 成果提交</li>
+        <li>死信队列：重试 3 次失败入人工</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-dot emerald"></div>
+        <h3>模型选择（三级）</h3>
+      </div>
+      <ul>
+        <li>1级: 自动路由 → 最便宜模型</li>
+        <li>2级: 员工手动覆盖 → 成本对比</li>
+        <li>3级: 管理员锁定 → 部门级配额</li>
+        <li>结果缓存: SHA256 复合 Key</li>
+        <li>降级链: 超阈值自动降级</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-dot violet"></div>
+        <h3>运维保障</h3>
+      </div>
+      <ul>
+        <li>心跳 → Redis TTL 60s，状态变更 → PG</li>
+        <li>领取超时 30min + 任务回收 2h</li>
+        <li>幂等性: 领取/提交/进度三接口</li>
+        <li>灰度 10% 先跑一周</li>
+        <li>Prometheus 全链路可观测</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="footer">
+    <p>OpenCLAW 跨部门协作系统 · V2.0 终版 · 全员评审通过 · 准备进入开发</p>
+  </div>
+</div>
+</body>
+</html>

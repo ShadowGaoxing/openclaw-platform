@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -c ' *)",
+      "Bash(where python *)",
+      "Bash(python -c \"import asyncpg; print\\('asyncpg ok'\\)\")",
+      "Bash(python -m py_compile app/main.py app/api/auth.py app/api/tasks.py app/api/agents.py app/api/models.py app/api/departments.py app/api/shared.py app/api/admin.py app/api/files.py app/core/redis_client.py app/core/nats_client.py app/core/scheduler.py app/core/response.py app/models/agent.py app/models/department.py app/models/department_model_lock.py)",
+      "Bash(npx tsc *)",
+      "Bash(echo \"EXIT CODE: $?\")",
+      "Bash(python -m py_compile app/api/shared.py)",
+      "Bash(echo \"TSC EXIT: $?\")",
+      "Bash(dir E:\\\\project\\\\openclaw-platform)",
+      "Bash(cmd *)",
+      "Bash(gh *)",
+      "Bash(/c/users/administrator/下载/gh *)"
+    ]
+  }
+}

@@ -1,0 +1,32 @@
+# OpenCLAW Agent 配置文件示例
+# 复制到 ~/.openclaw-agent/config.yaml 并修改
+
+main_node:
+  url: http://localhost:8000      # 主节点地址
+  token: ""                        # JWT token（先登录拿到）
+
+agent:
+  name: ""                         # 留空自动用 hostname-pid
+  department_id: ""                # 你所属部门的 UUID
+  max_concurrency: 2               # 最大并发任务数
+  heartbeat_interval_s: 30
+  poll_interval_s: 5
+
+# PRD V2.2 §6.2：模型执行器映射
+model_routes:
+  qwen2.5-7b:
+    executor: local
+    model_path: ~/.openclaw-agent/models/qwen2.5-7b-q4.gguf
+    min_ram_gb: 4
+  deepseek-coder-7b:
+    executor: local
+    model_path: ~/.openclaw-agent/models/deepseek-coder-7b-q4.gguf
+    min_ram_gb: 4
+  gpt-4o-mini:
+    executor: api
+    api_key_env: OPENAI_API_KEY
+    endpoint: https://api.openai.com/v1/chat/completions
+  doubao:
+    executor: api
+    api_key_env: DOUBAO_API_KEY
+    endpoint: https://api.doubao.com/v1/chat/completions

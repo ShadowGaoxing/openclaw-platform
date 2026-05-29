@@ -1,0 +1,85 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: openclaw-pg
+    environment:
+      POSTGRES_USER: openclaw
+      POSTGRES_PASSWORD: openclaw_dev_2026
+      POSTGRES_DB: openclaw
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U openclaw"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    mem_limit: 1g
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: openclaw-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    mem_limit: 512m
+    restart: unless-stopped
+
+  nats:
+    image: nats:2.10-alpine
+    container_name: openclaw-nats
+    ports:
+      - "4222:4222"    # NATS client
+      - "8222:8222"    # HTTP monitor
+      - "9222:9222"    # NATS WS
+    command:
+      - "--jetstream"
+      - "--max_msgs_per_stream=100000"
+      - "--max_bytes_per_stream=1GB"
+      - "--max_msg_size=10MB"
+      - "--http_port=8222"
+      - "--websocket_port=9222"
+      # JWT 认证需要在后续配置
+    volumes:
+      - nats_data:/data
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8222/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    mem_limit: 256m
+    restart: unless-stopped
+
+  minio:
+    image: minio/minio:latest
+    container_name: openclaw-minio
+    ports:
+      - "9000:9000"    # API
+      - "9001:9001"    # Console
+    environment:
+      MINIO_ROOT_USER: openclaw
+      MINIO_ROOT_PASSWORD: openclaw_dev_2026
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    mem_limit: 512m
+    restart: unless-stopped
+
+volumes:
+  pg_data:
+  redis_data:
+  nats_data:
+  minio_data:
